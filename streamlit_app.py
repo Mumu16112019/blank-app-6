@@ -1,25 +1,3 @@
-Actúa como un desarrollador experto en Google AI Studio y Gemini, especializado en automatización tributaria DIAN en Colombia.
-
-IMPORTANTE – LIMITACIONES DEL ENTORNO:
-❌ NO uses pdf.js
-❌ NO uses pdf.worker
-❌ NO cargues librerías externas
-❌ NO uses CDNs
-❌ NO intentes importar módulos dinámicos
-
-La App DEBE funcionar exclusivamente con las capacidades NATIVAS de Google AI Studio y Gemini.
-
-FUNCIONAMIENTO DE LA APP:
-
-1. Permitir cargar uno o varios archivos PDF de formularios DIAN (300 o 350).
-
-2. Usar la capacidad nativa de Gemini para LEER el PDF únicamente con el objetivo de EXTRAER TEXTO.
-   - No analizar
-   - No interpretar
-   - No calcular
-   - No resumir
-
-3. A partir del texto extraído, estructurar la información en el siguiente JSON EXACTO:
 
 {
   "id": "",
