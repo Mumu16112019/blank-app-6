@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-# Configuracion basica de la pagina
 st.set_page_config(
     page_title="Auditoria Tributaria DIAN - DEMO",
     layout="centered"
@@ -13,13 +12,12 @@ st.subheader("DEMO funcional para clientes")
 
 st.write(
     "Esta aplicacion es una demostracion comercial. "
-    "Permite cargar declaraciones DIAN en PDF y generar "
-    "un reporte automatico en Excel para auditoria."
+    "Permite cargar archivos PDF y generar un reporte "
+    "automatico en Excel para auditoria tributaria."
 )
 
-# Carga de archivos PDF
 uploaded_files = st.file_uploader(
-    "Cargue uno o varios PDF de declaraciones DIAN",
+    "Cargue uno o varios PDF",
     type=["pdf"],
     accept_multiple_files=True
 )
@@ -32,4 +30,30 @@ if uploaded_files:
         ["IVA", "Retencion en la Fuente"]
     )
 
-    if st.button("Generar reporte de auditoria"):
+    generar = st.button("Generar reporte de auditoria")
+
+    if generar:
+        filas = []
+
+        for i, file in enumerate(uploaded_files, start=1):
+            filas.append({
+                "RENGLON": i,
+                "ARCHIVO": file.name,
+                "IMPUESTO": impuesto,
+                "VALOR": i * 1000000
+            })
+
+        df = pd.DataFrame(filas)
+
+        buffer = BytesIO()
+        with pd.ExcelWriter(buffer) as writer:
+            df.to_excel(writer, index=False, sheet_name="Reporte")
+
+        st.success("Reporte generado correctamente")
+
+        st.download_button(
+            label="Descargar Excel",
+            data=buffer.getvalue(),
+            file_name=f"Auditoria_{impuesto}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
