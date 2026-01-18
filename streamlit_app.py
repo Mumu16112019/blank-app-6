@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import time
+from PyPDF2 import PdfReader
 
 # =========================
 # CONFIGURACIÓN GENERAL
@@ -12,219 +13,144 @@ st.set_page_config(
 )
 
 # =========================
-# FUNCIÓN RESET
+# RESET
 # =========================
 def reset_app():
     st.session_state.clear()
     st.rerun()
 
 # =========================
-# ESTILO CORPORATIVO UNIFICADO
+# VALIDACIÓN DE PDF
+# =========================
+def validar_pdf(file, impuesto):
+    try:
+        reader = PdfReader(file)
+        texto = ""
+        for page in reader.pages[:2]:
+            texto += page.extract_text() or ""
+        texto = texto.upper()
+
+        if impuesto in ["IVA", "RETENCIÓN EN LA FUENTE", "RENTA"]:
+            claves = ["DIAN", "FORMULARIO", "IMPUESTO", "PERIODO"]
+        else:  # ICA / RETE ICA
+            claves = ["INDUSTRIA Y COMERCIO", "ICA", "AVISOS", "RETENCION"]
+
+        return any(clave in texto for clave in claves)
+
+    except:
+        return False
+
+# =========================
+# ESTILO CORPORATIVO
 # =========================
 st.markdown("""
 <style>
-/* ===== FUENTE GLOBAL ===== */
 html, body, .stApp, * {
     font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
 }
-
-/* ===== FONDO GENERAL ===== */
 html, body, .stApp {
     background-color: #0b1e2d;
     color: #F8FAFC;
 }
-
-/* ===== TÍTULOS ===== */
-h1, h2, h3, h4 {
+h1, h2, h3 {
     color: #F8FAFC;
-    font-weight: 600;
 }
-
-/* ===== TEXTOS ===== */
-label, li, p, span {
-    color: #E5E7EB;
-}
-
-/* ===== PASOS 1️⃣ 2️⃣ 3️⃣ ===== */
-.stSubheader {
-    color: #38bdf8;
-    font-weight: 600;
-}
-
-/* ===== MÉTRICAS ===== */
-div[data-testid="stMetric"] {
-    background-color: #102a43;
-    border-radius: 12px;
-    padding: 14px;
-    border: 1px solid #1e3a5f;
-}
-
-div[data-testid="stMetric"] label {
-    color: #E5E7EB !important;
-    font-weight: 600;
-}
-
-div[data-testid="stMetric"] div {
-    color: #F8FAFC !important;
-    font-size: 1.6rem;
-    font-weight: 700;
-}
-
-/* ===== SELECTBOX ===== */
-.stSelectbox div[data-baseweb="select"] {
-    background-color: #FFFFFF !important;
-    color: #0f172a !important;
-    border-radius: 10px;
-}
-
-.stSelectbox span {
-    color: #0f172a !important;
-    font-weight: 500;
-}
-
-/* ===== FILE UPLOADER ===== */
-.stFileUploader {
-    background-color: #FFFFFF;
-    border-radius: 10px;
-    padding: 12px;
-}
-
-.stFileUploader label,
-.stFileUploader span,
-.stFileUploader small,
-.stFileUploader p {
-    color: #0f172a !important;
-    font-weight: 500;
-}
-
-/* ===== BOTONES (TODOS UNIFICADOS) ===== */
-.stButton>button,
-button[kind="secondary"] {
-    background: linear-gradient(135deg, #0ea5e9, #1e40af) !important;
-    color: #FFFFFF !important;
+.stButton>button, button[kind="secondary"] {
+    background: linear-gradient(135deg, #0ea5e9, #1e40af);
+    color: white !important;
     font-weight: 600;
     border-radius: 10px;
-    height: 3em;
     width: 100%;
-    border: none;
+    height: 3em;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # =========================
-# HEADER + RESET
+# HEADER
 # =========================
-col_title, col_reset = st.columns([8, 1])
-
-with col_title:
+col1, col2 = st.columns([8,1])
+with col1:
     st.title("Auditax Pro")
     st.caption("Plataforma Inteligente de Auditoría Tributaria")
-
-with col_reset:
-    st.write("")
+with col2:
     if st.button("Reset"):
         reset_app()
 
 st.divider()
 
 # =========================
-# SELECCIÓN DE IMPUESTO
+# IMPUESTO
 # =========================
 st.subheader("1️⃣ Seleccione el tipo de Impuesto")
 
 impuesto = st.selectbox(
     "Tipo de impuesto a procesar",
-    sorted([
-        "ICA",
-        "IVA",
-        "RENTA",
-        "RETE ICA",
-        "RETENCIÓN EN LA FUENTE"
-    ]),
-    index=None,
-    placeholder="Seleccione una opción"
+    sorted(["ICA", "IVA", "RENTA", "RETE ICA", "RETENCIÓN EN LA FUENTE"]),
+    index=None
 )
 
 if not impuesto:
     st.stop()
 
 # =========================
-# CARGA DE PDFs
+# CARGA PDF
 # =========================
-st.subheader("2️⃣ Cargue los Formularios DIAN (PDF)")
+st.subheader("2️⃣ Cargue los Formularios (PDF)")
 
-uploaded_files = st.file_uploader(
+files = st.file_uploader(
     "Puede cargar uno o varios archivos PDF",
     type=["pdf"],
     accept_multiple_files=True
 )
 
-if uploaded_files:
+if files:
     if "start_time" not in st.session_state:
         st.session_state.start_time = time.time()
 
-    st.session_state.files = uploaded_files
-    st.session_state.empresa = "Empresa identificada"
+    resultados = []
+
+    for file in files:
+        es_valido = validar_pdf(file, impuesto)
+        resultados.append({
+            "Archivo": file.name,
+            "Impuesto": impuesto,
+            "Resultado": "Formulario válido" if es_valido else "Documento No Válido"
+        })
+
+    st.session_state.df = pd.DataFrame(resultados)
 
 # =========================
-# PANEL DE CONTROL EJECUTIVO
+# PANEL + RESULTADOS
 # =========================
-if "files" in st.session_state and st.session_state.files:
+if "df" in st.session_state:
 
     st.subheader("📊 Panel de Control Ejecutivo")
 
     elapsed = round(time.time() - st.session_state.start_time, 2)
 
-    col1, col2, col3, col4 = st.columns(4)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Documentos cargados", len(st.session_state.df))
+    c2.metric("Tipo de Impuesto", impuesto)
+    c3.metric("Empresa", "Identificada")
+    c4.metric("Time (seg)", elapsed)
 
-    col1.metric("Documentos cargados", len(st.session_state.files))
-    col2.metric("Tipo de Impuesto", impuesto)
-    col3.metric("Empresa", st.session_state.empresa)
-    col4.metric("Time (seg)", elapsed)
-
-# =========================
-# GENERACIÓN DE REPORTE
-# =========================
-if "files" in st.session_state and st.session_state.files:
-    if st.button("Generar Reporte de Auditoría"):
-
-        data = []
-
-        for file in st.session_state.files:
-            data.append({
-                "Empresa": st.session_state.empresa,
-                "Archivo PDF": file.name,
-                "Impuesto": impuesto,
-                "Tamaño (KB)": round(file.size / 1024, 2),
-                "Resultado": "Formulario válido para auditoría"
-            })
-
-        st.session_state.df = pd.DataFrame(data)
-
-# =========================
-# RESULTADO Y DESCARGA
-# =========================
-if "df" in st.session_state:
-    st.subheader("3️⃣ Resultado de Auditoría")
-
+    st.subheader("3️⃣ Resultado de Validación")
     st.dataframe(st.session_state.df, use_container_width=True)
 
     st.download_button(
         "Descargar Reporte",
         data=st.session_state.df.to_csv(index=False),
-        file_name=f"Reporte_Auditax_{impuesto}.csv",
+        file_name=f"Validacion_{impuesto}.csv",
         mime="text/csv"
     )
 
 # =========================
 # FOOTER
 # =========================
-st.markdown(
-    """
-    <hr style="margin-top:40px; border:none; border-top:1px solid #1e3a5f;" />
-    <div style="text-align:center; color:#94a3b8; font-size:0.9rem;">
-        © Finanzas BI
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown("""
+<hr style="margin-top:40px; border:none; border-top:1px solid #1e3a5f;" />
+<div style="text-align:center; color:#94a3b8; font-size:0.9rem;">
+© Finanzas BI
+</div>
+""", unsafe_allow_html=True)
