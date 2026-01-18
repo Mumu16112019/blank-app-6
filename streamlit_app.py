@@ -1,11 +1,10 @@
 import streamlit as st
 import pandas as pd
-from collections import defaultdict
-from datetime import datetime
+from io import BytesIO
 
-# --------------------------------------------------
-# CONFIGURACIÓN VISUAL CORPORATIVA
-# --------------------------------------------------
+# =========================
+# CONFIGURACIÓN VISUAL
+# =========================
 st.set_page_config(
     page_title="Auditax Pro",
     layout="wide"
@@ -16,160 +15,107 @@ st.markdown("""
 body {
     background-color: #f5f7fa;
 }
+.block-container {
+    padding-top: 2rem;
+}
 h1, h2, h3 {
-    color: #0b3c5d;
-}
-[data-testid="metric-container"] {
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    padding: 15px;
-    border-radius: 8px;
-}
-.stButton>button {
-    background-color: #0b5ed7;
-    color: white;
-    border-radius: 6px;
-    padding: 0.5em 1.2em;
+    color: #1f3b5c;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --------------------------------------------------
-# ENCABEZADO APP
-# --------------------------------------------------
+# =========================
+# HEADER DASHBOARD
+# =========================
 st.title("Auditax Pro")
-st.caption("Plataforma de Auditoría Tributaria Inteligente")
+st.subheader("Auditoría Tributaria Inteligente")
 
 st.divider()
 
-# --------------------------------------------------
+# =========================
 # CARGA DE ARCHIVOS
-# --------------------------------------------------
+# =========================
 uploaded_files = st.file_uploader(
-    "Cargue Formularios DIAN (PDF)",
+    "Cargar Formularios DIAN (PDF)",
     type=["pdf"],
     accept_multiple_files=True
 )
 
 if not uploaded_files:
-    st.info("Cargue los formularios para iniciar el análisis tributario.")
+    st.info("Cargue formularios para iniciar el análisis.")
     st.stop()
 
-st.success(f"{len(uploaded_files)} formulario(s) cargado(s) correctamente")
+# =========================
+# SIMULACIÓN DE DATOS IA
+# (En producción viene Gemini)
+# =========================
+data = [
+    {"renglon": "40", "concepto": "Ingresos gravados", "P1": 1200000, "P2": 1300000},
+    {"renglon": "48", "concepto": "IVA generado", "P1": 228000, "P2": 247000},
+    {"renglon": "59", "concepto": "IVA descontable", "P1": 98000, "P2": 105000},
+]
 
-# --------------------------------------------------
-# SIMULACIÓN RESULTADO IA (DEMO CONTROLADA)
-# --------------------------------------------------
-forms = []
+empresa = "EMPRESA EJEMPLO S.A.S"
+nit = "900123456"
+impuesto = "IVA"
+periodicidad = "BIMESTRAL"
 
-for i, file in enumerate(uploaded_files, start=1):
-    forms.append({
-        "empresa": "EMPRESA DEMO SAS",
-        "nit": "900123456",
-        "impuesto": "IVA" if i % 2 != 0 else "RETENCION",
-        "periodo": f"P{i}/2025",
-        "rows": [
-            {"renglon": "49", "concepto": "Ingresos gravados", "valor": 100000000 * i},
-            {"renglon": "54", "concepto": "Impuesto generado", "valor": 19000000 * i},
-            {"renglon": "78", "concepto": "Servicios", "base": 50000000 * i, "impuesto": 1250000 * i}
-        ]
-    })
+df = pd.DataFrame(data)
 
-# --------------------------------------------------
-# FUNCIÓN DE REPORTE
-# --------------------------------------------------
-def generar_reporte(forms):
-    bloques = []
-    agrupado = defaultdict(lambda: defaultdict(list))
-
-    for f in forms:
-        agrupado[f["empresa"]][f["impuesto"]].append(f)
-
-    for empresa, impuestos in agrupado.items():
-        for impuesto, registros in impuestos.items():
-            periodos = sorted(set(r["periodo"] for r in registros))
-
-            # ENCABEZADO (FILAS A-D)
-            bloques.append([["EMPRESA", empresa]])
-            bloques.append([["NIT", registros[0]["nit"]]])
-            bloques.append([["IMPUESTO", "IVA" if impuesto == "IVA" else "RETENCIÓN EN LA FUENTE"]])
-            bloques.append([["PERIODICIDAD", ", ".join(periodos)]])
-            bloques.append([])
-
-            data = []
-
-            renglones = defaultdict(dict)
-
-            for r in registros:
-                for row in r["rows"]:
-                    renglones[row["renglon"]].update({
-                        "RENGLON": row["renglon"],
-                        "CONCEPTO": row["concepto"],
-                        r["periodo"]: row
-                    })
-
-            for info in renglones.values():
-                fila = {
-                    "RENGLON": info["RENGLON"],
-                    "CONCEPTO": info["CONCEPTO"]
-                }
-
-                total_valor = 0
-                total_base = 0
-                total_imp = 0
-
-                for p in periodos:
-                    d = info.get(p)
-                    if impuesto == "IVA":
-                        val = d.get("valor", 0) if d else 0
-                        fila[f"VALOR {p}"] = val
-                        total_valor += val
-                    else:
-                        base = d.get("base", 0) if d else 0
-                        imp = d.get("impuesto", 0) if d else 0
-                        fila[f"BASE {p}"] = base
-                        fila[f"RETENCIÓN {p}"] = imp
-                        total_base += base
-                        total_imp += imp
-
-                if impuesto == "IVA":
-                    fila["TOTAL VALOR"] = total_valor
-                else:
-                    fila["TOTAL BASES"] = total_base
-                    fila["TOTAL IMPUESTO"] = total_imp
-
-                data.append(fila)
-
-            bloques.append(pd.DataFrame(data))
-            bloques.append([])
-            bloques.append([])
-
-    return bloques
-
-# --------------------------------------------------
-# BOTÓN DE ACCIÓN
-# --------------------------------------------------
+# =========================
+# BOTÓN DE REPORTE
+# =========================
 if st.button("Generar Reporte de Auditoría"):
-    bloques = generar_reporte(forms)
+    buffer = BytesIO()
 
-    csv_lines = []
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        sheet_name = "IVA Auditoría"
+        df_excel = df.copy()
 
-    for bloque in bloques:
-        if isinstance(bloque, list):
-            for row in bloque:
-                csv_lines.append(",".join(row))
-        elif isinstance(bloque, pd.DataFrame):
-            csv_lines.append(bloque.to_csv(index=False).strip())
+        # Insertar columnas vacías para estructura
+        df_excel.insert(0, "RENGLON", df_excel.pop("renglon"))
+        df_excel.insert(1, "CONCEPTO", df_excel.pop("concepto"))
 
-    csv_final = "\n".join(csv_lines)
+        df_excel["TOTAL VALOR"] = df_excel.filter(like="P").sum(axis=1)
+
+        df_excel.to_excel(
+            writer,
+            sheet_name=sheet_name,
+            startrow=5,
+            index=False
+        )
+
+        ws = writer.book[sheet_name]
+
+        # =========================
+        # ENCABEZADO A1 - A4
+        # =========================
+        ws["A1"] = "EMPRESA"
+        ws["A2"] = "NIT"
+        ws["A3"] = "IMPUESTO"
+        ws["A4"] = "PERIODICIDAD"
+
+        ws["B1"] = empresa
+        ws["B2"] = nit
+        ws["B3"] = impuesto
+        ws["B4"] = periodicidad
+
+        # Estilo encabezado
+        for cell in ["A1","A2","A3","A4"]:
+            ws[cell].font = ws[cell].font.copy(bold=True)
+
+        # Ajuste columnas
+        ws.column_dimensions["A"].width = 14
+        ws.column_dimensions["B"].width = 40
+
+        for col in ["C","D","E","F","G"]:
+            ws.column_dimensions[col].width = 18
 
     st.success("Reporte generado correctamente")
 
     st.download_button(
-        label="Descargar Reporte de Auditoría",
-        data=csv_final.encode("utf-8"),
-        file_name="Auditax_Pro_Auditoria.csv",
-        mime="text/csv"
+        label="Descargar Reporte en Excel",
+        data=buffer.getvalue(),
+        file_name="Reporte_Auditoria_IVA.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-    st.caption("Reporte estructurado para auditoría DIAN. Formato profesional en entorno productivo.")
