@@ -12,14 +12,14 @@ st.set_page_config(
 )
 
 # =========================
-# FUNCIÓN RESET (CORREGIDA)
+# FUNCIÓN RESET
 # =========================
 def reset_app():
     st.session_state.clear()
     st.rerun()
 
 # =========================
-# ESTILO CORPORATIVO OSCURO
+# ESTILO CORPORATIVO OSCURO + AJUSTES FONDOS CLAROS
 # =========================
 st.markdown("""
 <style>
@@ -32,21 +32,45 @@ h1, h2, h3, h4 {
     color: #F8FAFC;
 }
 
-label, p, span, li, div {
-    color: #E5E7EB !important;
+label, p, span, li {
+    color: #E5E7EB;
+}
+
+/* ===== COMPONENTES CON FONDO OSCURO ===== */
+div[data-testid="stMetric"] {
+    background-color: #102a43;
+    border-radius: 12px;
+    padding: 14px;
+    border: 1px solid #1e3a5f;
+    color: #F8FAFC;
+}
+
+/* ===== SELECTBOX (FONDO CLARO) ===== */
+.stSelectbox div[data-baseweb="select"] {
+    background-color: #FFFFFF !important;
+    color: #0f172a !important;
+    border-radius: 10px;
+}
+
+.stSelectbox span {
+    color: #0f172a !important;
+    font-weight: 500;
+}
+
+/* ===== FILE UPLOADER (FONDO CLARO) ===== */
+.stFileUploader {
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    padding: 10px;
 }
 
 .stFileUploader label,
 .stFileUploader span,
 .stFileUploader small {
-    color: #F8FAFC !important;
+    color: #0f172a !important;
 }
 
-.stSelectbox > div {
-    background-color: #102a43;
-    border-radius: 10px;
-}
-
+/* ===== BOTONES ===== */
 .stButton>button {
     background: linear-gradient(135deg, #0ea5e9, #1e40af);
     color: white;
@@ -56,17 +80,18 @@ label, p, span, li, div {
     width: 100%;
 }
 
-div[data-testid="stMetric"] {
-    background-color: #102a43;
-    border-radius: 12px;
-    padding: 14px;
-    border: 1px solid #1e3a5f;
+/* ===== BOTÓN DESCARGA ===== */
+button[kind="secondary"] {
+    background-color: #FFFFFF !important;
+    color: #0f172a !important;
+    font-weight: 600;
+    border-radius: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # =========================
-# HEADER + BOTÓN RESET
+# HEADER + RESET
 # =========================
 col_title, col_reset = st.columns([8, 1])
 
