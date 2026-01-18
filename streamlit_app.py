@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 # ======================================================
-# FUNCIÓN RESET
+# RESET
 # ======================================================
 def reset_app():
     st.session_state.clear()
@@ -24,7 +24,7 @@ def reset_app():
 def validar_documento(nombre_archivo, impuesto):
     nombre = nombre_archivo.upper()
 
-    # Lista negra: rechazo inmediato
+    # Lista negra
     palabras_prohibidas = [
         "FACTURA", "CONTRATO", "EXTRACTO",
         "BANCARIO", "CUENTA", "SOPORTE",
@@ -48,24 +48,20 @@ def validar_documento(nombre_archivo, impuesto):
     return False
 
 # ======================================================
-# ESTILO CORPORATIVO EJECUTIVO (3.4)
+# ESTILO CORPORATIVO EJECUTIVO
 # ======================================================
 st.markdown("""
 <style>
 html, body, .stApp, * {
     font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
 }
-
 html, body, .stApp {
     background-color: #0b1e2d;
     color: #F8FAFC;
 }
-
 h1, h2, h3, h4 {
     color: #F8FAFC;
 }
-
-/* Botones */
 .stButton>button {
     background: linear-gradient(135deg, #0ea5e9, #1e40af);
     color: white !important;
@@ -74,20 +70,16 @@ h1, h2, h3, h4 {
     width: 100%;
     height: 3em;
 }
-
-/* Métricas */
 div[data-testid="stMetric"] {
     background-color: #102a43;
     border-radius: 12px;
     padding: 14px;
     border: 1px solid #1e3a5f;
 }
-
 div[data-testid="stMetric"] label {
     color: #E5E7EB !important;
     font-weight: 600;
 }
-
 div[data-testid="stMetric"] div {
     color: #F8FAFC !important;
     font-size: 1.6rem;
@@ -100,41 +92,31 @@ div[data-testid="stMetric"] div {
 # HEADER
 # ======================================================
 col1, col2 = st.columns([8, 1])
-
 with col1:
     st.title("Auditax Pro")
     st.caption("Plataforma Inteligente de Auditoría Tributaria")
-
 with col2:
-    st.write("")
     if st.button("Reset"):
         reset_app()
 
 st.divider()
 
 # ======================================================
-# SELECCIÓN DE IMPUESTO
+# IMPUESTO
 # ======================================================
 st.subheader("1️⃣ Seleccione el tipo de Impuesto")
 
 impuesto = st.selectbox(
     "Tipo de impuesto a procesar",
-    sorted([
-        "ICA",
-        "IVA",
-        "RENTA",
-        "RETE ICA",
-        "RETENCIÓN EN LA FUENTE"
-    ]),
-    index=None,
-    placeholder="Seleccione una opción"
+    sorted(["ICA", "IVA", "RENTA", "RETE ICA", "RETENCIÓN EN LA FUENTE"]),
+    index=None
 )
 
 if not impuesto:
     st.stop()
 
 # ======================================================
-# CARGA DE PDF (FIX VISUAL DEFINITIVO)
+# CARGA DE PDF (CORREGIDO)
 # ======================================================
 st.subheader("2️⃣ Cargue los Formularios (PDF)")
 
@@ -145,37 +127,34 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.markdown(
-    "<div style='background:#f8fafc; padding:16px; border-radius:12px;'>",
-    unsafe_allow_html=True
-)
+st.markdown("<div style='background:#f8fafc; padding:16px; border-radius:12px;'>", unsafe_allow_html=True)
 
 files = st.file_uploader(
-    "",
+    "Formularios PDF",
     type=["pdf"],
-    accept_multiple_files=True
+    accept_multiple_files=True,
+    label_visibility="collapsed"
 )
 
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ======================================================
-# PROCESAMIENTO
+# BOTÓN GENERAR REPORTE
 # ======================================================
 if files:
-    if "start_time" not in st.session_state:
+    if st.button("Generar Reporte de Auditoría"):
         st.session_state.start_time = time.time()
+        resultados = []
 
-    resultados = []
+        for file in files:
+            valido = validar_documento(file.name, impuesto)
+            resultados.append({
+                "Archivo": file.name,
+                "Impuesto": impuesto,
+                "Resultado": "Formulario válido" if valido else "Documento No Válido"
+            })
 
-    for file in files:
-        valido = validar_documento(file.name, impuesto)
-        resultados.append({
-            "Archivo": file.name,
-            "Impuesto": impuesto,
-            "Resultado": "Formulario válido" if valido else "Documento No Válido"
-        })
-
-    st.session_state.df = pd.DataFrame(resultados)
+        st.session_state.df = pd.DataFrame(resultados)
 
 # ======================================================
 # PANEL DE CONTROL EJECUTIVO
