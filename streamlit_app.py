@@ -6,37 +6,56 @@ import pandas as pd
 # =========================
 st.set_page_config(
     page_title="Auditax Pro",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
 # =========================
-# ESTILO EJECUTIVO OSCURO
+# ESTILO CORPORATIVO OSCURO (FORZADO)
 # =========================
 st.markdown("""
 <style>
-body {
-    background-color: #0f172a;
-    color: #e5e7eb;
+html, body, [class*="css"]  {
+    background-color: #0b1c2d !important;
+    color: #e5e7eb !important;
 }
-.block-container {
-    padding-top: 2rem;
-}
+
 h1, h2, h3 {
-    color: #e5e7eb;
+    color: #f8fafc !important;
 }
-[data-testid="stMetricValue"] {
-    color: #38bdf8;
+
+section[data-testid="stSidebar"] {
+    display: none;
 }
-.stButton>button {
-    background-color: #1e3a8a;
+
+div[data-testid="metric-container"] {
+    background-color: #112a46;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.stButton > button {
+    background: linear-gradient(135deg, #0ea5e9, #1e3a8a);
     color: white;
-    border-radius: 6px;
+    border-radius: 10px;
+    font-weight: 600;
+    height: 3em;
 }
-.stSelectbox label {
-    color: #cbd5f5;
+
+.stDataFrame {
+    background-color: #0b1c2d;
 }
 </style>
 """, unsafe_allow_html=True)
+
+# =========================
+# INICIALIZACIÓN DE ESTADO
+# =========================
+if "impuesto" not in st.session_state:
+    st.session_state.impuesto = None
+
+if "df" not in st.session_state:
+    st.session_state.df = None
 
 # =========================
 # HEADER
@@ -47,19 +66,19 @@ st.caption("Auditoría Tributaria Inteligente")
 st.divider()
 
 # =========================
-# DASHBOARD MÉTRICAS
+# DASHBOARD
 # =========================
 c1, c2, c3, c4 = st.columns(4)
 
-c1.metric("Formularios cargados", "3")
+c1.metric("Formularios cargados", "—")
 c2.metric("Empresas", "1")
-c3.metric("Impuesto seleccionado", "")
-c4.metric("Estado", "Listo para análisis")
+c3.metric("Impuesto", st.session_state.impuesto or "—")
+c4.metric("Estado", "Listo")
 
 st.divider()
 
 # =========================
-# CARGA DE PDFs
+# CARGA DE ARCHIVOS
 # =========================
 uploaded_files = st.file_uploader(
     "Cargar Formularios DIAN (PDF)",
@@ -67,34 +86,35 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
-if not uploaded_files:
-    st.info("Cargue los formularios para continuar.")
-    st.stop()
+if uploaded_files:
+    c1.metric("Formularios cargados", str(len(uploaded_files)))
 
 # =========================
-# SELECTOR DE FORMULARIO
+# SELECTOR DE IMPUESTO (BOTONES)
 # =========================
-st.subheader("Selección de tipo de Formulario")
+st.subheader("Seleccione el tipo de Impuesto")
 
-form_type = st.selectbox(
-    "Seleccione el impuesto a procesar",
-    [
-        "IVA – Formulario 300",
-        "Retención en la Fuente – Formulario 350",
-        "Rete ICA",
-        "ICA"
-    ]
-)
+b1, b2, b3, b4, b5 = st.columns(5)
+
+if b1.button("IVA"):
+    st.session_state.impuesto = "IVA"
+
+if b2.button("RETENCIÓN"):
+    st.session_state.impuesto = "RETENCIÓN EN LA FUENTE"
+
+if b3.button("RETE ICA"):
+    st.session_state.impuesto = "RETE ICA"
+
+if b4.button("ICA"):
+    st.session_state.impuesto = "ICA"
+
+if b5.button("RENTA"):
+    st.session_state.impuesto = "RENTA"
 
 # =========================
-# DATOS CONSISTENTES (DEMO)
+# GENERACIÓN DE DATOS COHERENTES
 # =========================
-empresa = "EMPRESA EJEMPLO S.A.S"
-nit = "900123456"
-periodicidad = "BIMESTRAL"
-
-if "IVA" in form_type:
-    impuesto = "IVA"
+if st.session_state.impuesto == "IVA":
     data = [
         {"RENGLON": "40", "CONCEPTO": "Ingresos gravados", "P1_2025": 1200000, "P2_2025": 1300000},
         {"RENGLON": "48", "CONCEPTO": "IVA generado", "P1_2025": 228000, "P2_2025": 247000},
@@ -102,32 +122,27 @@ if "IVA" in form_type:
     ]
     df = pd.DataFrame(data)
     df["TOTAL VALOR"] = df[["P1_2025", "P2_2025"]].sum(axis=1)
+    st.session_state.df = df
 
-else:
-    impuesto = "RETENCIÓN EN LA FUENTE"
+elif st.session_state.impuesto == "RETENCIÓN EN LA FUENTE":
     data = [
-        {"RENGLON": "27", "CONCEPTO": "Compras", "BASE_P1": 5000000, "RET_P1": 125000},
-        {"RENGLON": "28", "CONCEPTO": "Servicios", "BASE_P1": 3000000, "RET_P1": 120000},
+        {"RENGLON": "27", "CONCEPTO": "Compras", "BASE": 5000000, "RETENCIÓN": 125000},
+        {"RENGLON": "28", "CONCEPTO": "Servicios", "BASE": 3000000, "RETENCIÓN": 120000},
     ]
     df = pd.DataFrame(data)
-    df["TOTAL BASES"] = df["BASE_P1"]
-    df["TOTAL IMPUESTO"] = df["RET_P1"]
+    st.session_state.df = df
 
 # =========================
-# PREVIEW
+# PREVIEW Y REPORTE
 # =========================
-st.subheader("Vista previa del análisis")
-st.dataframe(df, use_container_width=True)
+if st.session_state.df is not None:
+    st.subheader("Vista previa del análisis")
+    st.dataframe(st.session_state.df, use_container_width=True)
 
-# =========================
-# GENERAR REPORTE
-# =========================
-if st.button("Generar Reporte de Auditoría"):
-    st.success("Reporte generado correctamente")
-
-    st.download_button(
-        label="Descargar Reporte (Excel compatible)",
-        data=df.to_csv(index=False),
-        file_name=f"Reporte_Auditoria_{impuesto}.csv",
-        mime="text/csv"
-    )
+    if st.button("Generar Reporte"):
+        st.download_button(
+            label="Descargar Reporte",
+            data=st.session_state.df.to_csv(index=False),
+            file_name=f"Reporte_{st.session_state.impuesto}.csv",
+            mime="text/csv"
+        )
