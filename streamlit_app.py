@@ -19,7 +19,7 @@ def reset_app():
     st.rerun()
 
 # =========================
-# ESTILO CORPORATIVO OSCURO + AJUSTES FONDOS CLAROS
+# ESTILO CORPORATIVO OSCURO + AJUSTE FILE UPLOADER
 # =========================
 st.markdown("""
 <style>
@@ -32,11 +32,11 @@ h1, h2, h3, h4 {
     color: #F8FAFC;
 }
 
-label, p, span, li {
+label, li {
     color: #E5E7EB;
 }
 
-/* ===== COMPONENTES CON FONDO OSCURO ===== */
+/* ===== MÉTRICAS ===== */
 div[data-testid="stMetric"] {
     background-color: #102a43;
     border-radius: 12px;
@@ -57,17 +57,19 @@ div[data-testid="stMetric"] {
     font-weight: 500;
 }
 
-/* ===== FILE UPLOADER (FONDO CLARO) ===== */
+/* ===== FILE UPLOADER (FONDO CLARO + TEXTO OSCURO) ===== */
 .stFileUploader {
     background-color: #FFFFFF;
     border-radius: 10px;
-    padding: 10px;
+    padding: 12px;
 }
 
 .stFileUploader label,
 .stFileUploader span,
-.stFileUploader small {
+.stFileUploader small,
+.stFileUploader p {
     color: #0f172a !important;
+    font-weight: 500;
 }
 
 /* ===== BOTONES ===== */
