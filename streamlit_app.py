@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import time
-from PyPDF2 import PdfReader
 
 # =========================
 # CONFIGURACIÓN GENERAL
@@ -20,25 +19,17 @@ def reset_app():
     st.rerun()
 
 # =========================
-# VALIDACIÓN DE PDF
+# VALIDACIÓN POR NOMBRE DE ARCHIVO
 # =========================
-def validar_pdf(file, impuesto):
-    try:
-        reader = PdfReader(file)
-        texto = ""
-        for page in reader.pages[:2]:
-            texto += page.extract_text() or ""
-        texto = texto.upper()
+def validar_documento(nombre_archivo, impuesto):
+    nombre = nombre_archivo.upper()
 
-        if impuesto in ["IVA", "RETENCIÓN EN LA FUENTE", "RENTA"]:
-            claves = ["DIAN", "FORMULARIO", "IMPUESTO", "PERIODO"]
-        else:  # ICA / RETE ICA
-            claves = ["INDUSTRIA Y COMERCIO", "ICA", "AVISOS", "RETENCION"]
+    if impuesto in ["IVA", "RETENCIÓN EN LA FUENTE", "RENTA"]:
+        claves = ["IVA", "DIAN", "FORMULARIO", "300", "350", "110"]
+    else:  # ICA / RETE ICA
+        claves = ["ICA", "INDUSTRIA", "COMERCIO", "AVISOS"]
 
-        return any(clave in texto for clave in claves)
-
-    except:
-        return False
+    return any(c in nombre for c in claves)
 
 # =========================
 # ESTILO CORPORATIVO
@@ -55,7 +46,7 @@ html, body, .stApp {
 h1, h2, h3 {
     color: #F8FAFC;
 }
-.stButton>button, button[kind="secondary"] {
+.stButton>button {
     background: linear-gradient(135deg, #0ea5e9, #1e40af);
     color: white !important;
     font-weight: 600;
@@ -94,7 +85,7 @@ if not impuesto:
     st.stop()
 
 # =========================
-# CARGA PDF
+# CARGA DE PDF
 # =========================
 st.subheader("2️⃣ Cargue los Formularios (PDF)")
 
@@ -111,17 +102,17 @@ if files:
     resultados = []
 
     for file in files:
-        es_valido = validar_pdf(file, impuesto)
+        valido = validar_documento(file.name, impuesto)
         resultados.append({
             "Archivo": file.name,
             "Impuesto": impuesto,
-            "Resultado": "Formulario válido" if es_valido else "Documento No Válido"
+            "Resultado": "Formulario válido" if valido else "Documento No Válido"
         })
 
     st.session_state.df = pd.DataFrame(resultados)
 
 # =========================
-# PANEL + RESULTADOS
+# PANEL EJECUTIVO
 # =========================
 if "df" in st.session_state:
 
