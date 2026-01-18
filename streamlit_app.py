@@ -19,20 +19,48 @@ def reset_app():
     st.rerun()
 
 # =========================
-# VALIDACIÓN POR NOMBRE DE ARCHIVO
+# VALIDACIÓN ESTRICTA DE PDF
 # =========================
 def validar_documento(nombre_archivo, impuesto):
     nombre = nombre_archivo.upper()
 
-    if impuesto in ["IVA", "RETENCIÓN EN LA FUENTE", "RENTA"]:
-        claves = ["IVA", "DIAN", "FORMULARIO", "300", "350", "110"]
-    else:  # ICA / RETE ICA
-        claves = ["ICA", "INDUSTRIA", "COMERCIO", "AVISOS"]
+    # Lista negra (rechazo inmediato)
+    palabras_prohibidas = [
+        "FACTURA", "CONTRATO", "EXTRACTO",
+        "BANCARIO", "CUENTA", "SOPORTE", "CERTIFICADO"
+    ]
 
-    return any(c in nombre for c in claves)
+    if any(p in nombre for p in palabras_prohibidas):
+        return False
+
+    if impuesto == "IVA":
+        return (
+            ("DIAN" in nombre or "FORMULARIO" in nombre)
+            and ("300" in nombre or "IVA" in nombre)
+        )
+
+    if impuesto == "RETENCIÓN EN LA FUENTE":
+        return (
+            "DIAN" in nombre
+            and ("350" in nombre or "RETENCION" in nombre)
+        )
+
+    if impuesto == "RENTA":
+        return (
+            "DIAN" in nombre
+            and ("110" in nombre or "RENTA" in nombre)
+        )
+
+    if impuesto in ["ICA", "RETE ICA"]:
+        return (
+            "ICA" in nombre
+            and ("INDUSTRIA" in nombre or "COMERCIO" in nombre)
+        )
+
+    return False
 
 # =========================
-# ESTILO CORPORATIVO
+# ESTILO CORPORATIVO (3.4)
 # =========================
 st.markdown("""
 <style>
@@ -43,8 +71,8 @@ html, body, .stApp {
     background-color: #0b1e2d;
     color: #F8FAFC;
 }
-h1, h2, h3 {
-    color: #F8FAFC;
+h1, h2, h3, label, span, p {
+    color: #F8FAFC !important;
 }
 .stButton>button {
     background: linear-gradient(135deg, #0ea5e9, #1e40af);
@@ -128,13 +156,6 @@ if "df" in st.session_state:
 
     st.subheader("3️⃣ Resultado de Validación")
     st.dataframe(st.session_state.df, use_container_width=True)
-
-    st.download_button(
-        "Descargar Reporte",
-        data=st.session_state.df.to_csv(index=False),
-        file_name=f"Validacion_{impuesto}.csv",
-        mime="text/csv"
-    )
 
 # =========================
 # FOOTER
