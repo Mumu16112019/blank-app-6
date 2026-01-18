@@ -2,35 +2,34 @@ import streamlit as st
 import pandas as pd
 import time
 
-# =========================
+# ======================================================
 # CONFIGURACIÓN GENERAL
-# =========================
+# ======================================================
 st.set_page_config(
     page_title="Auditax Pro",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# =========================
-# RESET
-# =========================
+# ======================================================
+# FUNCIÓN RESET
+# ======================================================
 def reset_app():
     st.session_state.clear()
     st.rerun()
 
-# =========================
-# VALIDACIÓN ULTRA ESTRICTA
-# =========================
+# ======================================================
+# VALIDACIÓN ULTRA ESTRICTA DE DOCUMENTOS
+# ======================================================
 def validar_documento(nombre_archivo, impuesto):
     nombre = nombre_archivo.upper()
 
-    # Lista negra
+    # Lista negra: rechazo inmediato
     palabras_prohibidas = [
         "FACTURA", "CONTRATO", "EXTRACTO",
         "BANCARIO", "CUENTA", "SOPORTE",
-        "CERTIFICADO", "RECIBO"
+        "CERTIFICADO", "RECIBO", "SOAT"
     ]
-
     if any(p in nombre for p in palabras_prohibidas):
         return False
 
@@ -48,20 +47,22 @@ def validar_documento(nombre_archivo, impuesto):
 
     return False
 
-# =========================
-# ESTILO CORPORATIVO + FIX FILE UPLOADER
-# =========================
+# ======================================================
+# ESTILO CORPORATIVO EJECUTIVO (3.4)
+# ======================================================
 st.markdown("""
 <style>
 html, body, .stApp, * {
     font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
 }
+
 html, body, .stApp {
     background-color: #0b1e2d;
     color: #F8FAFC;
 }
-h1, h2, h3, label, span, p {
-    color: #F8FAFC !important;
+
+h1, h2, h3, h4 {
+    color: #F8FAFC;
 }
 
 /* Botones */
@@ -74,56 +75,92 @@ h1, h2, h3, label, span, p {
     height: 3em;
 }
 
-/* FIX Browse files */
-[data-testid="stFileUploader"] label {
-    color: #0f172a !important;
+/* Métricas */
+div[data-testid="stMetric"] {
+    background-color: #102a43;
+    border-radius: 12px;
+    padding: 14px;
+    border: 1px solid #1e3a5f;
 }
-[data-testid="stFileUploader"] {
-    background-color: #f8fafc;
-    padding: 12px;
-    border-radius: 10px;
+
+div[data-testid="stMetric"] label {
+    color: #E5E7EB !important;
+    font-weight: 600;
+}
+
+div[data-testid="stMetric"] div {
+    color: #F8FAFC !important;
+    font-size: 1.6rem;
+    font-weight: 700;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# =========================
+# ======================================================
 # HEADER
-# =========================
-col1, col2 = st.columns([8,1])
+# ======================================================
+col1, col2 = st.columns([8, 1])
+
 with col1:
     st.title("Auditax Pro")
     st.caption("Plataforma Inteligente de Auditoría Tributaria")
+
 with col2:
+    st.write("")
     if st.button("Reset"):
         reset_app()
 
 st.divider()
 
-# =========================
-# IMPUESTO
-# =========================
+# ======================================================
+# SELECCIÓN DE IMPUESTO
+# ======================================================
 st.subheader("1️⃣ Seleccione el tipo de Impuesto")
 
 impuesto = st.selectbox(
     "Tipo de impuesto a procesar",
-    sorted(["ICA", "IVA", "RENTA", "RETE ICA", "RETENCIÓN EN LA FUENTE"]),
-    index=None
+    sorted([
+        "ICA",
+        "IVA",
+        "RENTA",
+        "RETE ICA",
+        "RETENCIÓN EN LA FUENTE"
+    ]),
+    index=None,
+    placeholder="Seleccione una opción"
 )
 
 if not impuesto:
     st.stop()
 
-# =========================
-# CARGA DE PDF
-# =========================
+# ======================================================
+# CARGA DE PDF (FIX VISUAL DEFINITIVO)
+# ======================================================
 st.subheader("2️⃣ Cargue los Formularios (PDF)")
 
+st.markdown(
+    "<span style='color:#0f172a; font-weight:600;'>"
+    "Puede cargar uno o varios archivos PDF (solo formularios tributarios)"
+    "</span>",
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    "<div style='background:#f8fafc; padding:16px; border-radius:12px;'>",
+    unsafe_allow_html=True
+)
+
 files = st.file_uploader(
-    "Puede cargar uno o varios archivos PDF",
+    "",
     type=["pdf"],
     accept_multiple_files=True
 )
 
+st.markdown("</div>", unsafe_allow_html=True)
+
+# ======================================================
+# PROCESAMIENTO
+# ======================================================
 if files:
     if "start_time" not in st.session_state:
         st.session_state.start_time = time.time()
@@ -140,9 +177,9 @@ if files:
 
     st.session_state.df = pd.DataFrame(resultados)
 
-# =========================
-# PANEL EJECUTIVO
-# =========================
+# ======================================================
+# PANEL DE CONTROL EJECUTIVO
+# ======================================================
 if "df" in st.session_state:
 
     st.subheader("📊 Panel de Control Ejecutivo")
@@ -158,9 +195,9 @@ if "df" in st.session_state:
     st.subheader("3️⃣ Resultado de Validación")
     st.dataframe(st.session_state.df, use_container_width=True)
 
-# =========================
+# ======================================================
 # FOOTER
-# =========================
+# ======================================================
 st.markdown("""
 <hr style="margin-top:40px; border:none; border-top:1px solid #1e3a5f;" />
 <div style="text-align:center; color:#94a3b8; font-size:0.9rem;">
