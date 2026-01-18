@@ -19,24 +19,39 @@ def reset_app():
     st.rerun()
 
 # =========================
-# ESTILO CORPORATIVO OSCURO + LEGIBILIDAD
+# ESTILO CORPORATIVO UNIFICADO
 # =========================
 st.markdown("""
 <style>
+/* ===== FUENTE GLOBAL ===== */
+html, body, .stApp, * {
+    font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* ===== FONDO GENERAL ===== */
 html, body, .stApp {
     background-color: #0b1e2d;
     color: #F8FAFC;
 }
 
+/* ===== TÍTULOS ===== */
 h1, h2, h3, h4 {
     color: #F8FAFC;
+    font-weight: 600;
 }
 
-label, li {
+/* ===== TEXTOS ===== */
+label, li, p, span {
     color: #E5E7EB;
 }
 
-/* ===== PANEL MÉTRICAS ===== */
+/* ===== PASOS 1️⃣ 2️⃣ 3️⃣ ===== */
+.stSubheader {
+    color: #38bdf8;
+    font-weight: 600;
+}
+
+/* ===== MÉTRICAS ===== */
 div[data-testid="stMetric"] {
     background-color: #102a43;
     border-radius: 12px;
@@ -44,20 +59,18 @@ div[data-testid="stMetric"] {
     border: 1px solid #1e3a5f;
 }
 
-/* TÍTULO MÉTRICA */
 div[data-testid="stMetric"] label {
     color: #E5E7EB !important;
     font-weight: 600;
 }
 
-/* VALOR MÉTRICA */
 div[data-testid="stMetric"] div {
     color: #F8FAFC !important;
     font-size: 1.6rem;
     font-weight: 700;
 }
 
-/* ===== SELECTBOX (FONDO CLARO) ===== */
+/* ===== SELECTBOX ===== */
 .stSelectbox div[data-baseweb="select"] {
     background-color: #FFFFFF !important;
     color: #0f172a !important;
@@ -69,7 +82,7 @@ div[data-testid="stMetric"] div {
     font-weight: 500;
 }
 
-/* ===== FILE UPLOADER (FONDO CLARO + TEXTO OSCURO) ===== */
+/* ===== FILE UPLOADER ===== */
 .stFileUploader {
     background-color: #FFFFFF;
     border-radius: 10px;
@@ -84,22 +97,16 @@ div[data-testid="stMetric"] div {
     font-weight: 500;
 }
 
-/* ===== BOTONES ===== */
-.stButton>button {
-    background: linear-gradient(135deg, #0ea5e9, #1e40af);
-    color: white;
+/* ===== BOTONES (TODOS UNIFICADOS) ===== */
+.stButton>button,
+button[kind="secondary"] {
+    background: linear-gradient(135deg, #0ea5e9, #1e40af) !important;
+    color: #FFFFFF !important;
     font-weight: 600;
     border-radius: 10px;
     height: 3em;
     width: 100%;
-}
-
-/* ===== BOTÓN DESCARGA ===== */
-button[kind="secondary"] {
-    background-color: #FFFFFF !important;
-    color: #0f172a !important;
-    font-weight: 600;
-    border-radius: 10px;
+    border: none;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -210,11 +217,11 @@ if "df" in st.session_state:
     )
 
 # =========================
-# FOOTER CORPORATIVO
+# FOOTER
 # =========================
 st.markdown(
     """
-    <hr style="margin-top:40px; border: none; border-top: 1px solid #1e3a5f;" />
+    <hr style="margin-top:40px; border:none; border-top:1px solid #1e3a5f;" />
     <div style="text-align:center; color:#94a3b8; font-size:0.9rem;">
         © Finanzas BI
     </div>
