@@ -19,48 +19,37 @@ def reset_app():
     st.rerun()
 
 # =========================
-# VALIDACIÓN ESTRICTA DE PDF
+# VALIDACIÓN ULTRA ESTRICTA
 # =========================
 def validar_documento(nombre_archivo, impuesto):
     nombre = nombre_archivo.upper()
 
-    # Lista negra (rechazo inmediato)
+    # Lista negra
     palabras_prohibidas = [
         "FACTURA", "CONTRATO", "EXTRACTO",
-        "BANCARIO", "CUENTA", "SOPORTE", "CERTIFICADO"
+        "BANCARIO", "CUENTA", "SOPORTE",
+        "CERTIFICADO", "RECIBO"
     ]
 
     if any(p in nombre for p in palabras_prohibidas):
         return False
 
     if impuesto == "IVA":
-        return (
-            ("DIAN" in nombre or "FORMULARIO" in nombre)
-            and ("300" in nombre or "IVA" in nombre)
-        )
+        return all(p in nombre for p in ["DIAN", "300", "IVA"])
 
     if impuesto == "RETENCIÓN EN LA FUENTE":
-        return (
-            "DIAN" in nombre
-            and ("350" in nombre or "RETENCION" in nombre)
-        )
+        return all(p in nombre for p in ["DIAN", "350", "RETENCION"])
 
     if impuesto == "RENTA":
-        return (
-            "DIAN" in nombre
-            and ("110" in nombre or "RENTA" in nombre)
-        )
+        return all(p in nombre for p in ["DIAN", "110", "RENTA"])
 
     if impuesto in ["ICA", "RETE ICA"]:
-        return (
-            "ICA" in nombre
-            and ("INDUSTRIA" in nombre or "COMERCIO" in nombre)
-        )
+        return "ICA" in nombre and ("INDUSTRIA" in nombre or "COMERCIO" in nombre)
 
     return False
 
 # =========================
-# ESTILO CORPORATIVO (3.4)
+# ESTILO CORPORATIVO + FIX FILE UPLOADER
 # =========================
 st.markdown("""
 <style>
@@ -74,6 +63,8 @@ html, body, .stApp {
 h1, h2, h3, label, span, p {
     color: #F8FAFC !important;
 }
+
+/* Botones */
 .stButton>button {
     background: linear-gradient(135deg, #0ea5e9, #1e40af);
     color: white !important;
@@ -81,6 +72,16 @@ h1, h2, h3, label, span, p {
     border-radius: 10px;
     width: 100%;
     height: 3em;
+}
+
+/* FIX Browse files */
+[data-testid="stFileUploader"] label {
+    color: #0f172a !important;
+}
+[data-testid="stFileUploader"] {
+    background-color: #f8fafc;
+    padding: 12px;
+    border-radius: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
