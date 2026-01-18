@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import time
+from io import BytesIO
 
 # ======================================================
 # CONFIGURACIÓN GENERAL
@@ -19,10 +20,11 @@ def reset_app():
     st.rerun()
 
 # ======================================================
-# ESTILO CORPORATIVO – DASHBOARD EJECUTIVO
+# ESTILO CORPORATIVO GLOBAL
 # ======================================================
 st.markdown("""
 <style>
+/* Fuente global */
 html, body, .stApp, * {
     font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
 }
@@ -33,12 +35,20 @@ html, body, .stApp {
     color: #F8FAFC;
 }
 
-/* Títulos */
-h1, h2, h3 {
-    color: #F8FAFC;
+/* =========================
+   TEXTOS EN FONDOS CLAROS
+========================= */
+section[data-testid], 
+section[data-testid] * {
+    color: #0b1e2d;
 }
 
-/* Botones */
+/* Títulos principales */
+h1, h2, h3 {
+    color: #F8FAFC !important;
+}
+
+/* Botones unificados */
 .stButton>button {
     background: linear-gradient(135deg, #0ea5e9, #1e40af);
     color: white !important;
@@ -54,50 +64,35 @@ h1, h2, h3 {
 section[data-testid="stFileUploader"] {
     background-color: #f8fafc;
     border-radius: 12px;
-    padding: 10px;
+    padding: 12px;
 }
 
-/* Texto "Browse files" */
-section[data-testid="stFileUploader"] button {
-    color: #0b1e2d !important;
-    font-weight: 600;
-}
-
-/* Texto drag & drop */
-section[data-testid="stFileUploader"] small {
-    color: #0b1e2d !important;
-}
-
-/* Nombre del archivo cargado */
-section[data-testid="stFileUploader"] span {
+section[data-testid="stFileUploader"] * {
     color: #0b1e2d !important;
     font-weight: 500;
 }
 
 /* =========================
-   MÉTRICAS – PANEL EJECUTIVO
+   PANEL EJECUTIVO
 ========================= */
-div[data-testid="stMetric"] {
+.exec-card {
     background-color: #102a43;
     border-radius: 14px;
     padding: 18px;
     border: 1px solid #1e3a5f;
-    text-align: center;
 }
 
-/* Etiqueta */
-div[data-testid="stMetric"] label {
-    color: #E5E7EB !important;
-    font-size: 0.95rem;
+.exec-label {
+    color: #E5E7EB;
+    font-size: 0.85rem;
     font-weight: 600;
+    margin-bottom: 6px;
 }
 
-/* Valor */
-div[data-testid="stMetric"] div {
-    color: #F8FAFC !important;
-    font-size: 1.4rem;
+.exec-value {
+    color: #F8FAFC;
+    font-size: 1.3rem;
     font-weight: 700;
-    line-height: 1.2;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -124,13 +119,7 @@ st.subheader("1️⃣ Seleccione el tipo de Impuesto")
 
 impuesto = st.selectbox(
     "Tipo de impuesto a procesar",
-    sorted([
-        "ICA",
-        "IVA",
-        "RENTA",
-        "RETE ICA",
-        "RETENCIÓN EN LA FUENTE"
-    ]),
+    sorted(["ICA", "IVA", "RENTA", "RETE ICA", "RETENCIÓN EN LA FUENTE"]),
     index=None,
     placeholder="Seleccione una opción"
 )
@@ -150,39 +139,82 @@ files = st.file_uploader(
 )
 
 # ======================================================
-# GENERAR REPORTE
+# GENERACIÓN AUTOMÁTICA
 # ======================================================
-if files:
-    if st.button("Generar Reporte de Auditoría"):
-        st.session_state.start_time = time.time()
+if files and st.button("Generar Reporte de Auditoría"):
 
-        data = []
-        for file in files:
-            data.append({
-                "Archivo": file.name,
-                "Impuesto": impuesto,
-                "Resultado": "Documento cargado"
-            })
+    start_time = time.time()
 
-        st.session_state.df = pd.DataFrame(data)
+    # Simulación de procesamiento real
+    rows = []
+    for f in files:
+        rows.append({
+            "Archivo": f.name,
+            "Impuesto": impuesto,
+            "Estado": "Procesado"
+        })
 
-# ======================================================
-# PANEL DE CONTROL EJECUTIVO
-# ======================================================
-if "df" in st.session_state:
+    df = pd.DataFrame(rows)
+    elapsed = round(time.time() - start_time, 2)
 
+    # ==================================================
+    # PANEL EJECUTIVO
+    # ==================================================
     st.subheader("📊 Panel de Control Ejecutivo")
 
-    elapsed = round(time.time() - st.session_state.start_time, 2)
-
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Documentos cargados", len(st.session_state.df))
-    c2.metric("Tipo de Impuesto", impuesto)
-    c3.metric("Empresa", "Identificada")
-    c4.metric("Time (seg)", elapsed)
 
+    with c1:
+        st.markdown("""
+        <div class="exec-card">
+            <div class="exec-label">Documentos cargados</div>
+            <div class="exec-value">{}</div>
+        </div>
+        """.format(len(df)), unsafe_allow_html=True)
+
+    with c2:
+        st.markdown("""
+        <div class="exec-card">
+            <div class="exec-label">Tipo de Impuesto</div>
+            <div class="exec-value">{}</div>
+        </div>
+        """.format(impuesto), unsafe_allow_html=True)
+
+    with c3:
+        st.markdown("""
+        <div class="exec-card">
+            <div class="exec-label">Empresa</div>
+            <div class="exec-value">Identificada</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with c4:
+        st.markdown("""
+        <div class="exec-card">
+            <div class="exec-label">Time (seg)</div>
+            <div class="exec-value">{}</div>
+        </div>
+        """.format(elapsed), unsafe_allow_html=True)
+
+    # ==================================================
+    # TABLA
+    # ==================================================
     st.subheader("3️⃣ Resultado de Auditoría")
-    st.dataframe(st.session_state.df, use_container_width=True)
+    st.dataframe(df, use_container_width=True)
+
+    # ==================================================
+    # EXCEL
+    # ==================================================
+    buffer = BytesIO()
+    df.to_excel(buffer, index=False)
+    buffer.seek(0)
+
+    st.download_button(
+        "📥 Descargar Reporte en Excel",
+        data=buffer,
+        file_name="Reporte_Auditax.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 # ======================================================
 # FOOTER
