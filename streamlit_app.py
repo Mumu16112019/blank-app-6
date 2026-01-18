@@ -20,61 +20,45 @@ def reset_app():
     st.rerun()
 
 # ======================================================
-# ESTILO CORPORATIVO GLOBAL
+# ESTILO CORPORATIVO – VERSIÓN 3.3
 # ======================================================
 st.markdown("""
 <style>
-/* Fuente global */
-html, body, .stApp, * {
-    font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
-}
-
-/* Fondo general */
 html, body, .stApp {
     background-color: #0b1e2d;
-    color: #F8FAFC;
+    color: #ffffff;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
 }
 
-/* =========================
-   TEXTOS EN FONDOS CLAROS
-========================= */
-section[data-testid], 
-section[data-testid] * {
-    color: #0b1e2d;
-}
-
-/* Títulos principales */
+/* TITULOS */
 h1, h2, h3 {
-    color: #F8FAFC !important;
+    color: #ffffff;
 }
 
-/* Botones unificados */
+/* BOTONES */
 .stButton>button {
     background: linear-gradient(135deg, #0ea5e9, #1e40af);
-    color: white !important;
+    color: white;
     font-weight: 600;
     border-radius: 10px;
     width: 100%;
     height: 3em;
 }
 
-/* =========================
-   FILE UPLOADER
-========================= */
-section[data-testid="stFileUploader"] {
+/* SELECTBOX Y FILE UPLOADER (FONDO BLANCO TEXTO OSCURO) */
+section[data-testid="stFileUploader"],
+section[data-testid="stSelectbox"] {
     background-color: #f8fafc;
-    border-radius: 12px;
     padding: 12px;
+    border-radius: 12px;
 }
 
-section[data-testid="stFileUploader"] * {
+section[data-testid="stFileUploader"] *,
+section[data-testid="stSelectbox"] * {
     color: #0b1e2d !important;
-    font-weight: 500;
 }
 
-/* =========================
-   PANEL EJECUTIVO
-========================= */
+/* DASHBOARD */
 .exec-card {
     background-color: #102a43;
     border-radius: 14px;
@@ -83,16 +67,21 @@ section[data-testid="stFileUploader"] * {
 }
 
 .exec-label {
-    color: #E5E7EB;
-    font-size: 0.85rem;
+    color: #e5e7eb;
+    font-size: 0.9rem;
     font-weight: 600;
-    margin-bottom: 6px;
 }
 
 .exec-value {
-    color: #F8FAFC;
-    font-size: 1.3rem;
+    color: #ffffff;
+    font-size: 1.4rem;
     font-weight: 700;
+}
+
+/* DATAFRAME */
+[data-testid="stDataFrame"] {
+    background-color: white;
+    border-radius: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -100,13 +89,13 @@ section[data-testid="stFileUploader"] * {
 # ======================================================
 # HEADER
 # ======================================================
-col1, col2 = st.columns([8, 1])
+c1, c2 = st.columns([8, 1])
 
-with col1:
+with c1:
     st.title("Auditax Pro")
     st.caption("Plataforma Inteligente de Auditoría Tributaria")
 
-with col2:
+with c2:
     if st.button("Reset"):
         reset_app()
 
@@ -115,10 +104,10 @@ st.divider()
 # ======================================================
 # SELECCIÓN DE IMPUESTO
 # ======================================================
-st.subheader("1️⃣ Seleccione el tipo de Impuesto")
+st.subheader("1️⃣ Tipo de Impuesto a procesar")
 
 impuesto = st.selectbox(
-    "Tipo de impuesto a procesar",
+    "Seleccione el impuesto",
     sorted(["ICA", "IVA", "RENTA", "RETE ICA", "RETENCIÓN EN LA FUENTE"]),
     index=None,
     placeholder="Seleccione una opción"
@@ -139,22 +128,21 @@ files = st.file_uploader(
 )
 
 # ======================================================
-# GENERACIÓN AUTOMÁTICA
+# GENERAR REPORTE
 # ======================================================
 if files and st.button("Generar Reporte de Auditoría"):
 
     start_time = time.time()
 
-    # Simulación de procesamiento real
-    rows = []
+    data = []
     for f in files:
-        rows.append({
+        data.append({
             "Archivo": f.name,
             "Impuesto": impuesto,
             "Estado": "Procesado"
         })
 
-    df = pd.DataFrame(rows)
+    df = pd.DataFrame(data)
     elapsed = round(time.time() - start_time, 2)
 
     # ==================================================
@@ -165,20 +153,20 @@ if files and st.button("Generar Reporte de Auditoría"):
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
-        st.markdown("""
+        st.markdown(f"""
         <div class="exec-card">
             <div class="exec-label">Documentos cargados</div>
-            <div class="exec-value">{}</div>
+            <div class="exec-value">{len(df)}</div>
         </div>
-        """.format(len(df)), unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
     with c2:
-        st.markdown("""
+        st.markdown(f"""
         <div class="exec-card">
             <div class="exec-label">Tipo de Impuesto</div>
-            <div class="exec-value">{}</div>
+            <div class="exec-value">{impuesto}</div>
         </div>
-        """.format(impuesto), unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
     with c3:
         st.markdown("""
@@ -189,15 +177,15 @@ if files and st.button("Generar Reporte de Auditoría"):
         """, unsafe_allow_html=True)
 
     with c4:
-        st.markdown("""
+        st.markdown(f"""
         <div class="exec-card">
             <div class="exec-label">Time (seg)</div>
-            <div class="exec-value">{}</div>
+            <div class="exec-value">{elapsed}</div>
         </div>
-        """.format(elapsed), unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
     # ==================================================
-    # TABLA
+    # TABLA RESULTADOS
     # ==================================================
     st.subheader("3️⃣ Resultado de Auditoría")
     st.dataframe(df, use_container_width=True)
@@ -220,7 +208,7 @@ if files and st.button("Generar Reporte de Auditoría"):
 # FOOTER
 # ======================================================
 st.markdown("""
-<hr style="margin-top:40px; border:none; border-top:1px solid #1e3a5f;" />
+<hr style="margin-top:40px; border:none; border-top:1px solid #1e3a5f;">
 <div style="text-align:center; color:#94a3b8; font-size:0.9rem;">
 © Finanzas BI
 </div>
