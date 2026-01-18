@@ -19,17 +19,21 @@ def reset_app():
     st.rerun()
 
 # ======================================================
-# ESTILO CORPORATIVO – VERSIÓN 3.4
+# ESTILO CORPORATIVO – DASHBOARD EJECUTIVO
 # ======================================================
 st.markdown("""
 <style>
 html, body, .stApp, * {
     font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
 }
+
+/* Fondo general */
 html, body, .stApp {
     background-color: #0b1e2d;
     color: #F8FAFC;
 }
+
+/* Títulos */
 h1, h2, h3 {
     color: #F8FAFC;
 }
@@ -44,21 +48,56 @@ h1, h2, h3 {
     height: 3em;
 }
 
-/* Métricas */
-div[data-testid="stMetric"] {
-    background-color: #102a43;
+/* =========================
+   FILE UPLOADER
+========================= */
+section[data-testid="stFileUploader"] {
+    background-color: #f8fafc;
     border-radius: 12px;
-    padding: 14px;
-    border: 1px solid #1e3a5f;
+    padding: 10px;
 }
-div[data-testid="stMetric"] label {
-    color: #E5E7EB !important;
+
+/* Texto "Browse files" */
+section[data-testid="stFileUploader"] button {
+    color: #0b1e2d !important;
     font-weight: 600;
 }
+
+/* Texto drag & drop */
+section[data-testid="stFileUploader"] small {
+    color: #0b1e2d !important;
+}
+
+/* Nombre del archivo cargado */
+section[data-testid="stFileUploader"] span {
+    color: #0b1e2d !important;
+    font-weight: 500;
+}
+
+/* =========================
+   MÉTRICAS – PANEL EJECUTIVO
+========================= */
+div[data-testid="stMetric"] {
+    background-color: #102a43;
+    border-radius: 14px;
+    padding: 18px;
+    border: 1px solid #1e3a5f;
+    text-align: center;
+}
+
+/* Etiqueta */
+div[data-testid="stMetric"] label {
+    color: #E5E7EB !important;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Valor */
 div[data-testid="stMetric"] div {
     color: #F8FAFC !important;
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     font-weight: 700;
+    line-height: 1.2;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -111,7 +150,7 @@ files = st.file_uploader(
 )
 
 # ======================================================
-# BOTÓN GENERAR REPORTE
+# GENERAR REPORTE
 # ======================================================
 if files:
     if st.button("Generar Reporte de Auditoría"):
