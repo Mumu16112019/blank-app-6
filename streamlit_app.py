@@ -10,18 +10,30 @@ st.set_page_config(
 )
 
 # =========================
-# ESTILO CORPORATIVO
+# ESTILO EJECUTIVO OSCURO
 # =========================
 st.markdown("""
 <style>
 body {
-    background-color: #f4f6f9;
+    background-color: #0f172a;
+    color: #e5e7eb;
+}
+.block-container {
+    padding-top: 2rem;
 }
 h1, h2, h3 {
-    color: #1f3b5c;
+    color: #e5e7eb;
 }
-.metric-label {
-    font-size: 14px;
+[data-testid="stMetricValue"] {
+    color: #38bdf8;
+}
+.stButton>button {
+    background-color: #1e3a8a;
+    color: white;
+    border-radius: 6px;
+}
+.stSelectbox label {
+    color: #cbd5f5;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -37,17 +49,17 @@ st.divider()
 # =========================
 # DASHBOARD MÉTRICAS
 # =========================
-col1, col2, col3, col4 = st.columns(4)
+c1, c2, c3, c4 = st.columns(4)
 
-col1.metric("Formularios cargados", "3")
-col2.metric("Empresas detectadas", "1")
-col3.metric("Impuestos", "IVA")
-col4.metric("Periodos", "3")
+c1.metric("Formularios cargados", "3")
+c2.metric("Empresas", "1")
+c3.metric("Impuesto seleccionado", "")
+c4.metric("Estado", "Listo para análisis")
 
 st.divider()
 
 # =========================
-# CARGA DE ARCHIVOS
+# CARGA DE PDFs
 # =========================
 uploaded_files = st.file_uploader(
     "Cargar Formularios DIAN (PDF)",
@@ -56,28 +68,53 @@ uploaded_files = st.file_uploader(
 )
 
 if not uploaded_files:
-    st.info("Cargue formularios para iniciar el análisis.")
+    st.info("Cargue los formularios para continuar.")
     st.stop()
 
 # =========================
-# DATOS SIMULADOS IA (DEMO)
+# SELECTOR DE FORMULARIO
+# =========================
+st.subheader("Selección de tipo de Formulario")
+
+form_type = st.selectbox(
+    "Seleccione el impuesto a procesar",
+    [
+        "IVA – Formulario 300",
+        "Retención en la Fuente – Formulario 350",
+        "Rete ICA",
+        "ICA"
+    ]
+)
+
+# =========================
+# DATOS CONSISTENTES (DEMO)
 # =========================
 empresa = "EMPRESA EJEMPLO S.A.S"
 nit = "900123456"
-impuesto = "IVA"
 periodicidad = "BIMESTRAL"
 
-data = [
-    {"RENGLON": "40", "CONCEPTO": "Ingresos gravados", "P1_2025": 1200000, "P2_2025": 1300000},
-    {"RENGLON": "48", "CONCEPTO": "IVA generado", "P1_2025": 228000, "P2_2025": 247000},
-    {"RENGLON": "59", "CONCEPTO": "IVA descontable", "P1_2025": 98000, "P2_2025": 105000},
-]
+if "IVA" in form_type:
+    impuesto = "IVA"
+    data = [
+        {"RENGLON": "40", "CONCEPTO": "Ingresos gravados", "P1_2025": 1200000, "P2_2025": 1300000},
+        {"RENGLON": "48", "CONCEPTO": "IVA generado", "P1_2025": 228000, "P2_2025": 247000},
+        {"RENGLON": "59", "CONCEPTO": "IVA descontable", "P1_2025": 98000, "P2_2025": 105000},
+    ]
+    df = pd.DataFrame(data)
+    df["TOTAL VALOR"] = df[["P1_2025", "P2_2025"]].sum(axis=1)
 
-df = pd.DataFrame(data)
-df["TOTAL VALOR"] = df[["P1_2025", "P2_2025"]].sum(axis=1)
+else:
+    impuesto = "RETENCIÓN EN LA FUENTE"
+    data = [
+        {"RENGLON": "27", "CONCEPTO": "Compras", "BASE_P1": 5000000, "RET_P1": 125000},
+        {"RENGLON": "28", "CONCEPTO": "Servicios", "BASE_P1": 3000000, "RET_P1": 120000},
+    ]
+    df = pd.DataFrame(data)
+    df["TOTAL BASES"] = df["BASE_P1"]
+    df["TOTAL IMPUESTO"] = df["RET_P1"]
 
 # =========================
-# PREVIEW TABLA
+# PREVIEW
 # =========================
 st.subheader("Vista previa del análisis")
 st.dataframe(df, use_container_width=True)
@@ -86,19 +123,11 @@ st.dataframe(df, use_container_width=True)
 # GENERAR REPORTE
 # =========================
 if st.button("Generar Reporte de Auditoría"):
-    reporte = df.copy()
-
-    # Encabezado como filas (A1–A4 conceptual)
-    encabezado = pd.DataFrame({
-        "Campo": ["EMPRESA", "NIT", "IMPUESTO", "PERIODICIDAD"],
-        "Valor": [empresa, nit, impuesto, periodicidad]
-    })
-
     st.success("Reporte generado correctamente")
 
     st.download_button(
         label="Descargar Reporte (Excel compatible)",
-        data=reporte.to_csv(index=False),
-        file_name="Reporte_Auditoria_IVA.csv",
+        data=df.to_csv(index=False),
+        file_name=f"Reporte_Auditoria_{impuesto}.csv",
         mime="text/csv"
     )
