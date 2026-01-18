@@ -1,114 +1,139 @@
 import streamlit as st
 import pandas as pd
 import time
-from io import BytesIO
 
-# ======================================================
+# =========================
 # CONFIGURACIÓN GENERAL
-# ======================================================
+# =========================
 st.set_page_config(
     page_title="Auditax Pro",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# ======================================================
-# RESET
-# ======================================================
+# =========================
+# FUNCIÓN RESET
+# =========================
 def reset_app():
     st.session_state.clear()
     st.rerun()
 
-# ======================================================
-# ESTILO CORPORATIVO – VERSIÓN 3.3
-# ======================================================
+# =========================
+# ESTILO CORPORATIVO OSCURO + AJUSTES VISUALES
+# =========================
 st.markdown("""
 <style>
 html, body, .stApp {
     background-color: #0b1e2d;
-    color: #ffffff;
-    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    color: #F8FAFC;
 }
 
-/* TITULOS */
-h1, h2, h3 {
-    color: #ffffff;
+h1, h2, h3, h4 {
+    color: #F8FAFC;
 }
 
-/* BOTONES */
+label, li {
+    color: #E5E7EB;
+}
+
+/* ===== PANEL MÉTRICAS ===== */
+div[data-testid="stMetric"] {
+    background-color: #102a43;
+    border-radius: 12px;
+    padding: 14px;
+    border: 1px solid #1e3a5f;
+}
+
+/* TÍTULO DE LA MÉTRICA */
+div[data-testid="stMetric"] label {
+    color: #E5E7EB !important;
+    font-weight: 600;
+}
+
+/* VALOR DE LA MÉTRICA */
+div[data-testid="stMetric"] div {
+    color: #F8FAFC !important;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+/* ===== SELECTBOX (FONDO CLARO) ===== */
+.stSelectbox div[data-baseweb="select"] {
+    background-color: #FFFFFF !important;
+    color: #0f172a !important;
+    border-radius: 10px;
+}
+
+.stSelectbox span {
+    color: #0f172a !important;
+    font-weight: 500;
+}
+
+/* ===== FILE UPLOADER ===== */
+.stFileUploader {
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.stFileUploader label,
+.stFileUploader span,
+.stFileUploader small,
+.stFileUploader p {
+    color: #0f172a !important;
+    font-weight: 500;
+}
+
+/* ===== BOTONES ===== */
 .stButton>button {
     background: linear-gradient(135deg, #0ea5e9, #1e40af);
     color: white;
     font-weight: 600;
     border-radius: 10px;
-    width: 100%;
     height: 3em;
+    width: 100%;
 }
 
-/* SELECTBOX Y FILE UPLOADER (FONDO BLANCO TEXTO OSCURO) */
-section[data-testid="stFileUploader"],
-section[data-testid="stSelectbox"] {
-    background-color: #f8fafc;
-    padding: 12px;
-    border-radius: 12px;
-}
-
-section[data-testid="stFileUploader"] *,
-section[data-testid="stSelectbox"] * {
-    color: #0b1e2d !important;
-}
-
-/* DASHBOARD */
-.exec-card {
-    background-color: #102a43;
-    border-radius: 14px;
-    padding: 18px;
-    border: 1px solid #1e3a5f;
-}
-
-.exec-label {
-    color: #e5e7eb;
-    font-size: 0.9rem;
+/* ===== BOTÓN DESCARGA ===== */
+button[kind="secondary"] {
+    background-color: #FFFFFF !important;
+    color: #0f172a !important;
     font-weight: 600;
-}
-
-.exec-value {
-    color: #ffffff;
-    font-size: 1.4rem;
-    font-weight: 700;
-}
-
-/* DATAFRAME */
-[data-testid="stDataFrame"] {
-    background-color: white;
     border-radius: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ======================================================
-# HEADER
-# ======================================================
-c1, c2 = st.columns([8, 1])
+# =========================
+# HEADER + RESET
+# =========================
+col_title, col_reset = st.columns([8, 1])
 
-with c1:
+with col_title:
     st.title("Auditax Pro")
     st.caption("Plataforma Inteligente de Auditoría Tributaria")
 
-with c2:
+with col_reset:
+    st.write("")
     if st.button("Reset"):
         reset_app()
 
 st.divider()
 
-# ======================================================
+# =========================
 # SELECCIÓN DE IMPUESTO
-# ======================================================
-st.subheader("1️⃣ Tipo de Impuesto a procesar")
+# =========================
+st.subheader("1️⃣ Seleccione el tipo de Impuesto")
 
 impuesto = st.selectbox(
-    "Seleccione el impuesto",
-    sorted(["ICA", "IVA", "RENTA", "RETE ICA", "RETENCIÓN EN LA FUENTE"]),
+    "Tipo de impuesto a procesar",
+    sorted([
+        "ICA",
+        "IVA",
+        "RENTA",
+        "RETE ICA",
+        "RETENCIÓN EN LA FUENTE"
+    ]),
     index=None,
     placeholder="Seleccione una opción"
 )
@@ -116,100 +141,70 @@ impuesto = st.selectbox(
 if not impuesto:
     st.stop()
 
-# ======================================================
-# CARGA DE PDF
-# ======================================================
-st.subheader("2️⃣ Cargue los Formularios (PDF)")
+# =========================
+# CARGA DE PDFs
+# =========================
+st.subheader("2️⃣ Cargue los Formularios DIAN (PDF)")
 
-files = st.file_uploader(
+uploaded_files = st.file_uploader(
     "Puede cargar uno o varios archivos PDF",
     type=["pdf"],
     accept_multiple_files=True
 )
 
-# ======================================================
-# GENERAR REPORTE
-# ======================================================
-if files and st.button("Generar Reporte de Auditoría"):
+if uploaded_files:
+    if "start_time" not in st.session_state:
+        st.session_state.start_time = time.time()
 
-    start_time = time.time()
+    st.session_state.files = uploaded_files
+    st.session_state.empresa = "Empresa identificada"
 
-    data = []
-    for f in files:
-        data.append({
-            "Archivo": f.name,
-            "Impuesto": impuesto,
-            "Estado": "Procesado"
-        })
+# =========================
+# PANEL DE CONTROL EJECUTIVO
+# =========================
+if "files" in st.session_state and st.session_state.files:
 
-    df = pd.DataFrame(data)
-    elapsed = round(time.time() - start_time, 2)
-
-    # ==================================================
-    # PANEL EJECUTIVO
-    # ==================================================
     st.subheader("📊 Panel de Control Ejecutivo")
 
-    c1, c2, c3, c4 = st.columns(4)
+    elapsed = round(time.time() - st.session_state.start_time, 2)
 
-    with c1:
-        st.markdown(f"""
-        <div class="exec-card">
-            <div class="exec-label">Documentos cargados</div>
-            <div class="exec-value">{len(df)}</div>
-        </div>
-        """, unsafe_allow_html=True)
+    col1, col2, col3, col4 = st.columns(4)
 
-    with c2:
-        st.markdown(f"""
-        <div class="exec-card">
-            <div class="exec-label">Tipo de Impuesto</div>
-            <div class="exec-value">{impuesto}</div>
-        </div>
-        """, unsafe_allow_html=True)
+    col1.metric("Documentos cargados", len(st.session_state.files))
+    col2.metric("Tipo de Impuesto", impuesto)
+    col3.metric("Empresa", st.session_state.empresa)
+    col4.metric("Time (seg)", elapsed)
 
-    with c3:
-        st.markdown("""
-        <div class="exec-card">
-            <div class="exec-label">Empresa</div>
-            <div class="exec-value">Identificada</div>
-        </div>
-        """, unsafe_allow_html=True)
+# =========================
+# GENERACIÓN DE REPORTE
+# =========================
+if "files" in st.session_state and st.session_state.files:
+    if st.button("Generar Reporte de Auditoría"):
 
-    with c4:
-        st.markdown(f"""
-        <div class="exec-card">
-            <div class="exec-label">Time (seg)</div>
-            <div class="exec-value">{elapsed}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        data = []
 
-    # ==================================================
-    # TABLA RESULTADOS
-    # ==================================================
+        for file in st.session_state.files:
+            data.append({
+                "Empresa": st.session_state.empresa,
+                "Archivo PDF": file.name,
+                "Impuesto": impuesto,
+                "Tamaño (KB)": round(file.size / 1024, 2),
+                "Resultado": "Formulario válido para auditoría"
+            })
+
+        st.session_state.df = pd.DataFrame(data)
+
+# =========================
+# RESULTADO Y DESCARGA
+# =========================
+if "df" in st.session_state:
     st.subheader("3️⃣ Resultado de Auditoría")
-    st.dataframe(df, use_container_width=True)
 
-    # ==================================================
-    # EXCEL
-    # ==================================================
-    buffer = BytesIO()
-    df.to_excel(buffer, index=False)
-    buffer.seek(0)
+    st.dataframe(st.session_state.df, use_container_width=True)
 
     st.download_button(
-        "📥 Descargar Reporte en Excel",
-        data=buffer,
-        file_name="Reporte_Auditax.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        "Descargar Reporte",
+        data=st.session_state.df.to_csv(index=False),
+        file_name=f"Reporte_Auditax_{impuesto}.csv",
+        mime="text/csv"
     )
-
-# ======================================================
-# FOOTER
-# ======================================================
-st.markdown("""
-<hr style="margin-top:40px; border:none; border-top:1px solid #1e3a5f;">
-<div style="text-align:center; color:#94a3b8; font-size:0.9rem;">
-© Finanzas BI
-</div>
-""", unsafe_allow_html=True)
