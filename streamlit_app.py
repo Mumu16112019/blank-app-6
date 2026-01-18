@@ -19,7 +19,7 @@ def reset_app():
     st.rerun()
 
 # =========================
-# ESTILO CORPORATIVO OSCURO + AJUSTE FILE UPLOADER
+# ESTILO CORPORATIVO OSCURO + AJUSTES VISUALES
 # =========================
 st.markdown("""
 <style>
@@ -36,13 +36,25 @@ label, li {
     color: #E5E7EB;
 }
 
-/* ===== MÉTRICAS ===== */
+/* ===== PANEL MÉTRICAS ===== */
 div[data-testid="stMetric"] {
     background-color: #102a43;
     border-radius: 12px;
     padding: 14px;
     border: 1px solid #1e3a5f;
-    color: #F8FAFC;
+}
+
+/* TÍTULO DE LA MÉTRICA */
+div[data-testid="stMetric"] label {
+    color: #E5E7EB !important;
+    font-weight: 600;
+}
+
+/* VALOR DE LA MÉTRICA */
+div[data-testid="stMetric"] div {
+    color: #F8FAFC !important;
+    font-size: 1.6rem;
+    font-weight: 700;
 }
 
 /* ===== SELECTBOX (FONDO CLARO) ===== */
@@ -57,7 +69,7 @@ div[data-testid="stMetric"] {
     font-weight: 500;
 }
 
-/* ===== FILE UPLOADER (FONDO CLARO + TEXTO OSCURO) ===== */
+/* ===== FILE UPLOADER ===== */
 .stFileUploader {
     background-color: #FFFFFF;
     border-radius: 10px;
