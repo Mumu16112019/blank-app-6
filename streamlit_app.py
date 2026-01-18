@@ -19,7 +19,7 @@ def reset_app():
     st.rerun()
 
 # =========================
-# ESTILO CORPORATIVO OSCURO + AJUSTES VISUALES
+# ESTILO CORPORATIVO OSCURO + LEGIBILIDAD
 # =========================
 st.markdown("""
 <style>
@@ -44,13 +44,13 @@ div[data-testid="stMetric"] {
     border: 1px solid #1e3a5f;
 }
 
-/* TÍTULO DE LA MÉTRICA */
+/* TÍTULO MÉTRICA */
 div[data-testid="stMetric"] label {
     color: #E5E7EB !important;
     font-weight: 600;
 }
 
-/* VALOR DE LA MÉTRICA */
+/* VALOR MÉTRICA */
 div[data-testid="stMetric"] div {
     color: #F8FAFC !important;
     font-size: 1.6rem;
@@ -69,7 +69,7 @@ div[data-testid="stMetric"] div {
     font-weight: 500;
 }
 
-/* ===== FILE UPLOADER ===== */
+/* ===== FILE UPLOADER (FONDO CLARO + TEXTO OSCURO) ===== */
 .stFileUploader {
     background-color: #FFFFFF;
     border-radius: 10px;
@@ -208,3 +208,16 @@ if "df" in st.session_state:
         file_name=f"Reporte_Auditax_{impuesto}.csv",
         mime="text/csv"
     )
+
+# =========================
+# FOOTER CORPORATIVO
+# =========================
+st.markdown(
+    """
+    <hr style="margin-top:40px; border: none; border-top: 1px solid #1e3a5f;" />
+    <div style="text-align:center; color:#94a3b8; font-size:0.9rem;">
+        © Finanzas BI
+    </div>
+    """,
+    unsafe_allow_html=True
+)
