@@ -19,36 +19,7 @@ def reset_app():
     st.rerun()
 
 # ======================================================
-# VALIDACIÓN ULTRA ESTRICTA DE DOCUMENTOS
-# ======================================================
-def validar_documento(nombre_archivo, impuesto):
-    nombre = nombre_archivo.upper()
-
-    # Lista negra
-    palabras_prohibidas = [
-        "FACTURA", "CONTRATO", "EXTRACTO",
-        "BANCARIO", "CUENTA", "SOPORTE",
-        "CERTIFICADO", "RECIBO", "SOAT"
-    ]
-    if any(p in nombre for p in palabras_prohibidas):
-        return False
-
-    if impuesto == "IVA":
-        return all(p in nombre for p in ["DIAN", "300", "IVA"])
-
-    if impuesto == "RETENCIÓN EN LA FUENTE":
-        return all(p in nombre for p in ["DIAN", "350", "RETENCION"])
-
-    if impuesto == "RENTA":
-        return all(p in nombre for p in ["DIAN", "110", "RENTA"])
-
-    if impuesto in ["ICA", "RETE ICA"]:
-        return "ICA" in nombre and ("INDUSTRIA" in nombre or "COMERCIO" in nombre)
-
-    return False
-
-# ======================================================
-# ESTILO CORPORATIVO EJECUTIVO
+# ESTILO CORPORATIVO – VERSIÓN 3.4
 # ======================================================
 st.markdown("""
 <style>
@@ -59,9 +30,11 @@ html, body, .stApp {
     background-color: #0b1e2d;
     color: #F8FAFC;
 }
-h1, h2, h3, h4 {
+h1, h2, h3 {
     color: #F8FAFC;
 }
+
+/* Botones */
 .stButton>button {
     background: linear-gradient(135deg, #0ea5e9, #1e40af);
     color: white !important;
@@ -70,6 +43,8 @@ h1, h2, h3, h4 {
     width: 100%;
     height: 3em;
 }
+
+/* Métricas */
 div[data-testid="stMetric"] {
     background-color: #102a43;
     border-radius: 12px;
@@ -92,9 +67,11 @@ div[data-testid="stMetric"] div {
 # HEADER
 # ======================================================
 col1, col2 = st.columns([8, 1])
+
 with col1:
     st.title("Auditax Pro")
     st.caption("Plataforma Inteligente de Auditoría Tributaria")
+
 with col2:
     if st.button("Reset"):
         reset_app()
@@ -102,41 +79,36 @@ with col2:
 st.divider()
 
 # ======================================================
-# IMPUESTO
+# SELECCIÓN DE IMPUESTO
 # ======================================================
 st.subheader("1️⃣ Seleccione el tipo de Impuesto")
 
 impuesto = st.selectbox(
     "Tipo de impuesto a procesar",
-    sorted(["ICA", "IVA", "RENTA", "RETE ICA", "RETENCIÓN EN LA FUENTE"]),
-    index=None
+    sorted([
+        "ICA",
+        "IVA",
+        "RENTA",
+        "RETE ICA",
+        "RETENCIÓN EN LA FUENTE"
+    ]),
+    index=None,
+    placeholder="Seleccione una opción"
 )
 
 if not impuesto:
     st.stop()
 
 # ======================================================
-# CARGA DE PDF (CORREGIDO)
+# CARGA DE PDF
 # ======================================================
 st.subheader("2️⃣ Cargue los Formularios (PDF)")
 
-st.markdown(
-    "<span style='color:#0f172a; font-weight:600;'>"
-    "Puede cargar uno o varios archivos PDF (solo formularios tributarios)"
-    "</span>",
-    unsafe_allow_html=True
-)
-
-st.markdown("<div style='background:#f8fafc; padding:16px; border-radius:12px;'>", unsafe_allow_html=True)
-
 files = st.file_uploader(
-    "Formularios PDF",
+    "Puede cargar uno o varios archivos PDF",
     type=["pdf"],
-    accept_multiple_files=True,
-    label_visibility="collapsed"
+    accept_multiple_files=True
 )
-
-st.markdown("</div>", unsafe_allow_html=True)
 
 # ======================================================
 # BOTÓN GENERAR REPORTE
@@ -144,17 +116,16 @@ st.markdown("</div>", unsafe_allow_html=True)
 if files:
     if st.button("Generar Reporte de Auditoría"):
         st.session_state.start_time = time.time()
-        resultados = []
 
+        data = []
         for file in files:
-            valido = validar_documento(file.name, impuesto)
-            resultados.append({
+            data.append({
                 "Archivo": file.name,
                 "Impuesto": impuesto,
-                "Resultado": "Formulario válido" if valido else "Documento No Válido"
+                "Resultado": "Documento cargado"
             })
 
-        st.session_state.df = pd.DataFrame(resultados)
+        st.session_state.df = pd.DataFrame(data)
 
 # ======================================================
 # PANEL DE CONTROL EJECUTIVO
@@ -171,7 +142,7 @@ if "df" in st.session_state:
     c3.metric("Empresa", "Identificada")
     c4.metric("Time (seg)", elapsed)
 
-    st.subheader("3️⃣ Resultado de Validación")
+    st.subheader("3️⃣ Resultado de Auditoría")
     st.dataframe(st.session_state.df, use_container_width=True)
 
 # ======================================================
