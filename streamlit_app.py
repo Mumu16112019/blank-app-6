@@ -12,11 +12,11 @@ st.set_page_config(
 )
 
 # =========================
-# FUNCION RESET
+# FUNCIÓN RESET (CORREGIDA)
 # =========================
 def reset_app():
     st.session_state.clear()
-    st.experimental_rerun()
+    st.rerun()
 
 # =========================
 # ESTILO CORPORATIVO OSCURO
@@ -32,20 +32,14 @@ h1, h2, h3, h4 {
     color: #F8FAFC;
 }
 
-label, p, span, li {
+label, p, span, li, div {
     color: #E5E7EB !important;
 }
 
-.stFileUploader label {
-    color: #F8FAFC !important;
-}
-
-.stFileUploader span {
-    color: #F8FAFC !important;
-}
-
+.stFileUploader label,
+.stFileUploader span,
 .stFileUploader small {
-    color: #CBD5E1 !important;
+    color: #F8FAFC !important;
 }
 
 .stSelectbox > div {
@@ -72,7 +66,7 @@ div[data-testid="stMetric"] {
 """, unsafe_allow_html=True)
 
 # =========================
-# HEADER CON BOTON RESET
+# HEADER + BOTÓN RESET
 # =========================
 col_title, col_reset = st.columns([8, 1])
 
@@ -122,8 +116,9 @@ uploaded_files = st.file_uploader(
 if uploaded_files:
     if "start_time" not in st.session_state:
         st.session_state.start_time = time.time()
+
     st.session_state.files = uploaded_files
-    st.session_state.empresa = "Empresa identificada en entorno productivo"
+    st.session_state.empresa = "Empresa identificada"
 
 # =========================
 # PANEL DE CONTROL EJECUTIVO
